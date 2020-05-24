@@ -1,6 +1,5 @@
 const stream = require('stream');
 const os = require('os');
-
 class LineSplitStream extends stream.Transform {
   constructor(options) {
     super(options);
@@ -9,8 +8,7 @@ class LineSplitStream extends stream.Transform {
   }
 
   _transform(chunk, encoding, callback) {
-    const data = chunk.toString();
-    this.line += data;
+    this.line += chunk.toString();
     this.data = this.line.split(os.EOL);
     callback();
   }
