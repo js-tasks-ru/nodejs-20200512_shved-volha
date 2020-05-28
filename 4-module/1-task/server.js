@@ -12,23 +12,21 @@ server.on('request', (req, res) => {
 
   switch (req.method) {
     case 'GET':
-      fs.exists(filepath, function(exists) {
-        if (exists) {
-          const rdStream = fs.createReadStream(filepath);
-          rdStream.on('data', function(chunk) {
-            res.end(chunk);
-          });
-        }
-        else {
-          if (dirName[0] !== '.') {
-            res.statusCode = 400;
-          } else {
-            res.statusCode = 404;
-          }
-          res.end(`Error getting the file.`);
-        }
-      });
-
+      fs.createReadStream(filepath)
+          .on('error', function(error) {
+            if (error.code === 'ENOENT') {
+              if (dirName[0] !== '.') {
+                res.statusCode = 400;
+              } else {
+                res.statusCode = 404;
+              }
+              res.end(`Error getting the file.`);
+            } else {
+              res.statusCode = 500;
+              res.end(`Internal server error.`);
+            }
+          })
+          .pipe(res);
       break;
 
     default:
@@ -36,4 +34,5 @@ server.on('request', (req, res) => {
       res.end('Not implemented');
   }
 });
+
 module.exports = server;
