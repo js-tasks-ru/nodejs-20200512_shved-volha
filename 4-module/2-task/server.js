@@ -17,8 +17,6 @@ server.on('request', async (req, res) => {
       req.pipe(limitedStream).pipe(writeStream);
 
       writeStream.on('error', (error) => {
-        console.log(error.code);
-        writeStream.end();
         if (error.code === 'ENOENT') {
           res.statusCode = 400;
           res.end('File size is too big');
