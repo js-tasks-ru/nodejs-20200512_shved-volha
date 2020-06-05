@@ -2,41 +2,31 @@ const url = require('url');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
-const LimitSizeStream = require('./LimitSizeStream');
-const limitedStream = new LimitSizeStream({limit: 1000000});
+
+const receiveFile = require('./receiveFile');
 
 const server = new http.Server();
 
 server.on('request', async (req, res) => {
   const pathname = url.parse(req.url).pathname.slice(1);
+
+  if (pathname.includes('/') || pathname.includes('..')) {
+    res.statusCode = 400;
+    res.end('Nested paths are not allowed');
+    return;
+  }
+
   const filepath = path.join(__dirname, 'files', pathname);
-  const writeStream = fs.createWriteStream(filepath, {flags: 'wx'});
  
   switch (req.method) {
     case 'POST':
-      req
-          .pipe(limitedStream)
-          .on('error', (error) => {
-            res.statusCode = 413;
-            res.end();
-          })
-          .pipe(writeStream)
-          .on('error', (error) => {
-            if (error.code === 'ENOENT') {
-              res.statusCode = 400;
-              res.end('File size is too big');
-            } else if (error.code === 'EEXIST') {
-              res.statusCode = 409;
-              res.end('File already exists');
-            } else {
-              res.statusCode = 500;
-              res.end('Internal service error');
-            }
-          })
-          .on('finish', () => {
-            res.statusCode = 201;
-            res.end('File successfully created');
-          });
+      if (!filepath) {
+        res.statusCode = 404;
+        res.end('File not found');
+        return;
+      }
+
+      receiveFile(filepath, req, res);
 
       break;
 
