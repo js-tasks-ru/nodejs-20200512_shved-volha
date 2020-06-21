@@ -7,10 +7,6 @@ module.exports = function authenticate(strategy, email, displayName, done) {
       return done(err);
     };
 
-    // User.schema.path('email').validate(function(email) {
-    //   console.log(email)
-    // });
-
     if (!user) {
       const newUser = new User({email, displayName});
       newUser.save()
